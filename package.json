@@ -1,8 +1,8 @@
 {
   "name": "com.basis.setup",
   "displayName": "Basis Setup",
-  "version": "0.0.1",
-  "description": "Generates and updates the project-level configuration Unity requires to live under Assets/ (Addressables, XR, URP rendering defaults, quality, input, highlight, Steam Audio, link.xml, Android templates, SteamVR bindings). Creators build the files from code; mergers bring an existing project's copies up to date.",
+  "version": "0.1.0",
+  "description": "Replicates the project-level configuration Unity requires to live under Assets/ (Addressables, XR, URP rendering defaults, quality, input, highlight, Steam Audio, link.xml, Android templates, SteamVR bindings). Maintainers bake the golden project's config into the package's Templates~ store; consumers install/update from those verbatim, GUID-preserved templates.",
   "author": {
     "name": "BasisVR",
     "url": "https://github.com/BasisVR"

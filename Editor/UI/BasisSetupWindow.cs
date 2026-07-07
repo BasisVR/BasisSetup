@@ -43,6 +43,16 @@ namespace Basis.Setup
                 }
             }
 
+            using (new EditorGUI.DisabledScope(!BasisSetupTemplates.IsWritable()))
+            {
+                if (GUILayout.Button("Bake Templates From Project (maintainer)", GUILayout.Height(22)))
+                {
+                    BasisSetupBaker.BakeMenu();
+                }
+            }
+
+            EditorGUILayout.LabelField("Package: " + BasisSetupTemplates.SourceDescription(), EditorStyles.miniLabel);
+
             EditorGUILayout.Space(6);
 
             using (var scope = new EditorGUILayout.ScrollViewScope(_scroll))

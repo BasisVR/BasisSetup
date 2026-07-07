@@ -51,6 +51,34 @@ namespace Basis.Setup
             }
         }
 
+        public static void CreateMissingAssetsBatch()
+        {
+            RunBatch(BasisSetupMode.EnsureExists);
+        }
+
+        public static void UpdateAllAssetsBatch()
+        {
+            RunBatch(BasisSetupMode.Update);
+        }
+
+        private static void RunBatch(BasisSetupMode mode)
+        {
+            List<BasisSetupReport> reports = ApplyAll(mode);
+            int errors = 0;
+            for (int i = 0; i < reports.Count; i++)
+            {
+                if (reports[i].Status == BasisSetupStatus.Error)
+                {
+                    errors++;
+                }
+            }
+
+            if (Application.isBatchMode)
+            {
+                EditorApplication.Exit(errors > 0 ? 1 : 0);
+            }
+        }
+
         private static void LogSummary(List<BasisSetupReport> reports, BasisSetupMode mode)
         {
             int created = 0;

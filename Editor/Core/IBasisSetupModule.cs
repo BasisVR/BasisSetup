@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace Basis.Setup
 {
     public enum BasisSetupStatus
@@ -42,6 +44,7 @@ namespace Basis.Setup
         int Order { get; }
         bool IsAvailable { get; }
         bool AutoApplyOnImport { get; }
+        IEnumerable<string> OwnedPaths { get; }
         BasisSetupStatus GetStatus();
         BasisSetupReport Apply(BasisSetupMode mode);
     }

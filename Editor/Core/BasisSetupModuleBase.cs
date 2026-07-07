@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
 namespace Basis.Setup
@@ -13,9 +15,49 @@ namespace Basis.Setup
         public virtual bool IsAvailable => true;
         public virtual bool AutoApplyOnImport => false;
 
-        protected abstract bool Exists();
+        /// <summary>
+        /// Project-relative files/folders this module replicates verbatim from the package's template store.
+        /// A module that sets this needs no <see cref="Build"/> override — the default copies the templates in,
+        /// then runs <see cref="Activate"/>. Legacy modules still override <see cref="Build"/> directly.
+        /// </summary>
+        public virtual IEnumerable<string> OwnedPaths => Array.Empty<string>();
 
-        protected abstract bool Build(BasisSetupMode mode);
+        protected virtual bool Exists()
+        {
+            bool any = false;
+            foreach (string path in OwnedPaths)
+            {
+                any = true;
+                if (!BasisSetupIO.ProjectPathExists(path))
+                {
+                    return false;
+                }
+            }
+
+            return any;
+        }
+
+        protected virtual bool Build(BasisSetupMode mode)
+        {
+            bool changed = false;
+            foreach (string path in OwnedPaths)
+            {
+                changed |= BasisSetupTemplates.CopyFromTemplates(path, mode);
+            }
+
+            if (changed)
+            {
+                AssetDatabase.Refresh();
+            }
+
+            Activate();
+            return changed;
+        }
+
+        /// <summary>Editor wiring an asset can't carry (config-object registration, graphics defaults). Runs after copy.</summary>
+        protected virtual void Activate()
+        {
+        }
 
         public BasisSetupStatus GetStatus()
         {

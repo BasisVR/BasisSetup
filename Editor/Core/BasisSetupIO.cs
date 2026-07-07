@@ -172,6 +172,134 @@ namespace Basis.Setup
             return asset;
         }
 
+        public static bool ProjectPathExists(string projectRelPath)
+        {
+            string full = ToFullPath(projectRelPath);
+            return File.Exists(full) || Directory.Exists(full);
+        }
+
+        /// <summary>
+        /// Mirror a file or folder (with its <c>.meta</c>) from <paramref name="srcFull"/> to
+        /// <paramref name="dstFull"/>, replacing whatever is there. Returns the number of files copied.
+        /// </summary>
+        public static int MirrorWithMeta(string srcFull, string dstFull)
+        {
+            int count = 0;
+            if (Directory.Exists(srcFull))
+            {
+                if (Directory.Exists(dstFull))
+                {
+                    Directory.Delete(dstFull, true);
+                }
+
+                count += CopyDirectory(srcFull, dstFull);
+            }
+            else if (File.Exists(srcFull))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(dstFull));
+                File.Copy(srcFull, dstFull, true);
+                count++;
+            }
+            else
+            {
+                return 0;
+            }
+
+            string srcMeta = srcFull + ".meta";
+            if (File.Exists(srcMeta))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(dstFull));
+                File.Copy(srcMeta, dstFull + ".meta", true);
+                count++;
+            }
+
+            return count;
+        }
+
+        /// <summary>
+        /// Copy a baked template (file or folder) into the project. <see cref="BasisSetupMode.EnsureExists"/>
+        /// leaves an existing target untouched; <see cref="BasisSetupMode.Update"/> backs it up then replaces
+        /// it wholesale so the result matches the template exactly. Returns true if the project changed.
+        /// </summary>
+        public static bool ApplyFromTemplate(string srcFull, string dstFull, string projectRelPath, BasisSetupMode mode)
+        {
+            if (!File.Exists(srcFull) && !Directory.Exists(srcFull))
+            {
+                return false;
+            }
+
+            bool dstExists = File.Exists(dstFull) || Directory.Exists(dstFull);
+            if (dstExists)
+            {
+                if (mode == BasisSetupMode.EnsureExists)
+                {
+                    return false;
+                }
+
+                BackupPathIfExists(projectRelPath);
+                DeletePath(dstFull);
+            }
+
+            MirrorWithMeta(srcFull, dstFull);
+            return true;
+        }
+
+        public static void DeletePath(string full)
+        {
+            if (Directory.Exists(full))
+            {
+                Directory.Delete(full, true);
+            }
+            else if (File.Exists(full))
+            {
+                File.Delete(full);
+            }
+
+            string meta = full + ".meta";
+            if (File.Exists(meta))
+            {
+                File.Delete(meta);
+            }
+        }
+
+        public static bool BackupPathIfExists(string projectRelPath)
+        {
+            string full = ToFullPath(projectRelPath);
+            if (Directory.Exists(full))
+            {
+                string stamp = DateTime.Now.ToString("yyyyMMdd-HHmmss");
+                string dest = Path.Combine(ProjectRoot(), BackupRoot, stamp, projectRelPath.Replace('\\', '/'));
+                CopyDirectory(full, dest);
+                string meta = full + ".meta";
+                if (File.Exists(meta))
+                {
+                    File.Copy(meta, dest + ".meta", true);
+                }
+
+                return true;
+            }
+
+            return BackupIfExists(projectRelPath);
+        }
+
+        private static int CopyDirectory(string src, string dst)
+        {
+            Directory.CreateDirectory(dst);
+            int count = 0;
+            foreach (string file in Directory.GetFiles(src))
+            {
+                File.Copy(file, Path.Combine(dst, Path.GetFileName(file)), true);
+                count++;
+            }
+
+            foreach (string dir in Directory.GetDirectories(src))
+            {
+                count += CopyDirectory(dir, Path.Combine(dst, Path.GetFileName(dir)));
+            }
+
+            return count;
+        }
+
         public static string ToFullPath(string assetPath)
         {
             return Path.Combine(ProjectRoot(), assetPath.Replace('/', Path.DirectorySeparatorChar));
